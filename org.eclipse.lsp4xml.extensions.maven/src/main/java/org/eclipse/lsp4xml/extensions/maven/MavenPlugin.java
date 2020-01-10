@@ -15,6 +15,7 @@ import org.eclipse.lsp4xml.dom.DOMDocument;
 import org.eclipse.lsp4xml.services.extensions.ICompletionParticipant;
 import org.eclipse.lsp4xml.services.extensions.IXMLExtension;
 import org.eclipse.lsp4xml.services.extensions.XMLExtensionsRegistry;
+import org.eclipse.lsp4xml.services.extensions.diagnostics.IDiagnosticsParticipant;
 import org.eclipse.lsp4xml.services.extensions.save.ISaveContext;
 
 /**
@@ -26,9 +27,10 @@ public class MavenPlugin implements IXMLExtension {
 	private static final String POM_XML = "pom.xml";
 
 	private final ICompletionParticipant completionParticipant;
-
+	private final IDiagnosticsParticipant diagnosticParticipant;
 	public MavenPlugin() {
 		completionParticipant = new MavenCompletionParticipant();
+		diagnosticParticipant = new MavenDiagnosticParticipant();
 	}
 
 	@Override
@@ -39,11 +41,13 @@ public class MavenPlugin implements IXMLExtension {
 	@Override
 	public void start(InitializeParams params, XMLExtensionsRegistry registry) {
 		registry.registerCompletionParticipant(completionParticipant);
+		registry.registerDiagnosticsParticipant(diagnosticParticipant);
 	}
 
 	@Override
 	public void stop(XMLExtensionsRegistry registry) {
 		registry.unregisterCompletionParticipant(completionParticipant);
+		registry.unregisterDiagnosticsParticipant(diagnosticParticipant);
 	}
 
 	public static boolean match(DOMDocument document) {
