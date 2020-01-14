@@ -1,7 +1,9 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<modelVersion>4.0.0</modelVersion>
+	<properties>
+	        <arbitrary.property.a>This is some text</arbitrary.property.a>
+        <hibernate.version>3.3.0.ga</hibernate.version>
+	</properties>
 	<parent>
 		<groupId>org.lsp4xml</groupId>
 		<artifactId>lsp4xml-extensions</artifactId>

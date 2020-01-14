@@ -24,6 +24,7 @@ import org.eclipse.lsp4xml.commons.snippets.SnippetRegistry;
 import org.eclipse.lsp4xml.dom.DOMDocument;
 import org.eclipse.lsp4xml.dom.DOMElement;
 import org.eclipse.lsp4xml.extensions.maven.searcher.ArtifactSearcherManager;
+import org.eclipse.lsp4xml.extensions.maven.searcher.LocalPropertiesSearcher;
 import org.eclipse.lsp4xml.extensions.maven.searcher.LocalSubModuleSearcher;
 import org.eclipse.lsp4xml.extensions.maven.searcher.ParentSearcher;
 import org.eclipse.lsp4xml.services.extensions.CompletionParticipantAdapter;
@@ -42,7 +43,7 @@ public class MavenCompletionParticipant extends CompletionParticipantAdapter {
 		if (parent == null || parent.getLocalName() == null) {
 			return;
 		}
-		//TODO: These two switch cases should be combined into one
+		// TODO: These two switch cases should be combined into one
 		switch (parent.getParentElement().getLocalName()) {
 		case "parent":
 			collectParentCompletion(request, response);
@@ -53,17 +54,20 @@ public class MavenCompletionParticipant extends CompletionParticipantAdapter {
 			break;
 		}
 		switch (parent.getLocalName()) {
+		case "properties":
+			collectPropertiesCompletion(request, response);
+			break;
 		case "scope":
 			collectScopeCompletion(request, response);
 			break;
 		case "groupId":
-			if (!parent.getParentElement().getLocalName().equals("parent")){
+			if (!parent.getParentElement().getLocalName().equals("parent")) {
 				collectGroupIdCompletion(request, response);
 			}
 			break;
 		case "module":
 			collectSubModuleCompletion(request, response);
-			if (!parent.getParentElement().getLocalName().equals("parent")){
+			if (!parent.getParentElement().getLocalName().equals("parent")) {
 				collectGroupIdCompletion(request, response);
 			}
 			break;
@@ -80,6 +84,39 @@ public class MavenCompletionParticipant extends CompletionParticipantAdapter {
 						return parent.getLocalName().equals(context.getValue());
 					}).forEach(completionItem -> response.addCompletionItem(completionItem));
 		}
+
+		if (parent.getChild(0).getNodeValue().startsWith("{")) {
+			collectPropertiesCompletion(request, response);
+			System.out.println("TERST");
+		}
+	}
+
+	private void collectPropertiesCompletion(ICompletionRequest request, ICompletionResponse response) {
+		DOMElement node = request.getParentElement();
+		DOMDocument doc = request.getXMLDocument();
+
+		Range range = XMLPositionUtility.createRange(node.getStartTagCloseOffset() + 1, node.getEndTagOpenOffset(),
+				doc);
+		try {
+			LocalPropertiesSearcher propertiesSearcher = LocalPropertiesSearcher.getInstance();
+			propertiesSearcher.setPomFile(new File(doc.getDocumentURI().substring(5)));
+			for (String property : propertiesSearcher.getProperties()) {
+				String label = "{" + property + "}";
+				CompletionItem item = new CompletionItem();
+				item.setLabel(label);
+				String insertText = label;
+				item.setKind(CompletionItemKind.Property);
+				item.setDocumentation(Either.forLeft(""));
+				item.setFilterText(insertText);
+				item.setTextEdit(new TextEdit(range, insertText));
+				item.setInsertTextFormat(InsertTextFormat.PlainText);
+				response.addCompletionItem(item, false);
+			}
+		} catch (IOException | XmlPullParserException e) {
+			e.printStackTrace();
+		}
+		System.out.println(response.toString());
+
 	}
 
 	private void collectSubModuleCompletion(ICompletionRequest request, ICompletionResponse response) {
@@ -90,7 +127,7 @@ public class MavenCompletionParticipant extends CompletionParticipantAdapter {
 				doc);
 
 		try {
-			//TODO: Get the File properly without using substring
+			// TODO: Get the File properly without using substring
 			LocalSubModuleSearcher subModuleSearcher = LocalSubModuleSearcher.getInstance();
 			subModuleSearcher.setPomFile(new File(doc.getDocumentURI().substring(5)));
 			for (String module : subModuleSearcher.getSubModules()) {
@@ -150,7 +187,6 @@ public class MavenCompletionParticipant extends CompletionParticipantAdapter {
 			response.addCompletionItem(getParentVersion(doc, range));
 			break;
 		default:
-			//TODO: Make a snippet that autocompletes the entire parent (artifact, groupid and version)
 			break;
 		}
 
