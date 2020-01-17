@@ -36,13 +36,15 @@ public class MavenPlugin implements IXMLExtension {
 	private static final String POM_XML = "pom.xml";
 
 	private static final String MAVEN_XMLLS_EXTENSION_REALM_ID = MavenPlugin.class.getName();
+	
+	public static final String DEFAULT_LOCAL_REPOSITORY_PATH = System.getProperty("user.home") + "/.m2/repository";
 
 	private final ICompletionParticipant completionParticipant;
 	private final IDiagnosticsParticipant diagnosticParticipant;
 	private PlexusContainer container;
 
 	public MavenPlugin() {
-		completionParticipant = new MavenCompletionParticipant();
+		completionParticipant = new MavenCompletionParticipant(() -> this.container);
 		diagnosticParticipant = new MavenDiagnosticParticipant(() -> this.container);
 	}
 

@@ -11,7 +11,9 @@ package org.eclipse.lsp4xml.extensions.maven;
 import java.io.File;
 import java.io.IOException;
 import java.util.Set;
+import java.util.function.Supplier;
 
+import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
@@ -24,6 +26,7 @@ import org.eclipse.lsp4xml.commons.snippets.SnippetRegistry;
 import org.eclipse.lsp4xml.dom.DOMDocument;
 import org.eclipse.lsp4xml.dom.DOMElement;
 import org.eclipse.lsp4xml.extensions.maven.searcher.ArtifactSearcherManager;
+import org.eclipse.lsp4xml.extensions.maven.searcher.ArtifactVersionSearcher;
 import org.eclipse.lsp4xml.extensions.maven.searcher.LocalSubModuleSearcher;
 import org.eclipse.lsp4xml.extensions.maven.searcher.ParentSearcher;
 import org.eclipse.lsp4xml.services.extensions.CompletionParticipantAdapter;
@@ -34,6 +37,11 @@ import org.eclipse.lsp4xml.utils.XMLPositionUtility;
 public class MavenCompletionParticipant extends CompletionParticipantAdapter {
 
 	private boolean snippetsLoaded;
+	private Supplier<PlexusContainer> containerSupplier;
+	public MavenCompletionParticipant(Supplier<PlexusContainer> containerSupplier) {
+		this.containerSupplier = containerSupplier;
+	}
+
 
 	@Override
 	public void onXMLContent(ICompletionRequest request, ICompletionResponse response) throws Exception {
@@ -53,6 +61,9 @@ public class MavenCompletionParticipant extends CompletionParticipantAdapter {
 			break;
 		}
 		switch (parent.getLocalName()) {
+		case "version":
+			collectVersionCompletion(request, response);
+			break;
 		case "scope":
 			collectScopeCompletion(request, response);
 			break;
@@ -81,6 +92,49 @@ public class MavenCompletionParticipant extends CompletionParticipantAdapter {
 					}).forEach(completionItem -> response.addCompletionItem(completionItem));
 		}
 	}
+
+	private void collectLatestVersionCompletion(ICompletionRequest request, ICompletionResponse response) {
+		DOMElement node = request.getParentElement();
+		DOMDocument doc = request.getXMLDocument();
+
+		Range range = XMLPositionUtility.createRange(node.getStartTagCloseOffset() + 1, node.getEndTagOpenOffset(),
+				doc);
+		ArtifactVersionSearcher artifactVersionSearcher = ArtifactVersionSearcher.getInstance();
+		artifactVersionSearcher.setContainer(containerSupplier.get());
+		
+		String label = artifactVersionSearcher.getHighestArtifactVersion(node);
+		CompletionItem item = new CompletionItem();
+		item.setLabel(label);
+		String insertText = label;
+		item.setKind(CompletionItemKind.Property);
+		item.setDocumentation(Either.forLeft("Latest available artifact version"));
+		item.setFilterText(insertText);
+		item.setTextEdit(new TextEdit(range, insertText));
+		item.setInsertTextFormat(InsertTextFormat.PlainText);
+		response.addCompletionItem(item);
+	}
+	private void collectVersionCompletion(ICompletionRequest request, ICompletionResponse response) {
+		DOMElement node = request.getParentElement();
+		DOMDocument doc = request.getXMLDocument();
+
+		Range range = XMLPositionUtility.createRange(node.getStartTagCloseOffset() + 1, node.getEndTagOpenOffset(),
+				doc);
+		ArtifactVersionSearcher artifactVersionSearcher = ArtifactVersionSearcher.getInstance();
+		artifactVersionSearcher.setContainer(containerSupplier.get());
+		for (String version : artifactVersionSearcher.getArtifactVersions(node)) {
+			String label = version;
+			CompletionItem item = new CompletionItem();
+			item.setLabel(label);
+			String insertText = label;
+			item.setKind(CompletionItemKind.Property);
+			item.setDocumentation(Either.forLeft("Artifact Version"));
+			item.setFilterText(insertText);
+			item.setTextEdit(new TextEdit(range, insertText));
+			item.setInsertTextFormat(InsertTextFormat.PlainText);
+			response.addCompletionItem(item);
+		}
+	}
+
 
 	private void collectSubModuleCompletion(ICompletionRequest request, ICompletionResponse response) {
 		DOMElement node = request.getParentElement();
