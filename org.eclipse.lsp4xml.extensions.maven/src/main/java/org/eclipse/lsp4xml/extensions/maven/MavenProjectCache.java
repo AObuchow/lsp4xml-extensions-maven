@@ -39,7 +39,6 @@ import org.codehaus.plexus.PlexusContainer;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
 import org.eclipse.aether.DefaultRepositorySystemSession;
 import org.eclipse.lsp4xml.dom.DOMDocument;
-import org.eclipse.lsp4xml.extensions.maven.searcher.ArtifactVersionSearcher;
 
 public class MavenProjectCache {
 

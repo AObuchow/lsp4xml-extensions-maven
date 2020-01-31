@@ -5,7 +5,7 @@
 
 	<groupId>org.lsp4xml</groupId>
 	<artifactId>maven-xmlls-extension</artifactId>
-	<version>0.0.2-SNAPSHOT</version>
+	<version>0.0.3-SNAPSHOT</version>
 
 	<licenses>
 		<license>

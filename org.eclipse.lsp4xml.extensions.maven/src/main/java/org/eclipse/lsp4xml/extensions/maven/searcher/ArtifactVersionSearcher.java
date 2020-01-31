@@ -115,9 +115,7 @@ public class ArtifactVersionSearcher {
 			try {
 				response = indexer.searchIterator(request);
 			} catch (IOException e) {
-				// TODO: Use String.join() below to pretty print artifactToSearch
-				System.out.println("Index search failed for " + artifactToSearch.getGroupId() + ":"
-						+ artifactToSearch.getArtifactId() + ":" + artifactToSearch.getVersion());
+				System.out.println("Index search failed for " + String.join(":", artifactToSearch.getGroupId(), artifactToSearch.getArtifactId(), artifactToSearch.getVersion()));
 				e.printStackTrace();
 			}
 			List<ArtifactInfo> artifactInfos = new ArrayList<>();

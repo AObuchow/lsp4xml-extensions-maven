@@ -8,7 +8,6 @@
  *******************************************************************************/
 package org.eclipse.lsp4xml.extensions.maven;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -23,10 +22,10 @@ import java.util.function.Function;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
+import org.apache.maven.model.Model;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.repository.RepositorySystem;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
-import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.InsertTextFormat;
@@ -43,8 +42,6 @@ import org.eclipse.lsp4xml.dom.LineIndentInfo;
 import org.eclipse.lsp4xml.extensions.maven.searcher.ArtifactSearcherManager;
 import org.eclipse.lsp4xml.extensions.maven.searcher.ArtifactVersionSearcher;
 import org.eclipse.lsp4xml.extensions.maven.searcher.LocalRepositorySearcher;
-import org.eclipse.lsp4xml.extensions.maven.searcher.LocalSubModuleSearcher;
-import org.eclipse.lsp4xml.extensions.maven.searcher.ParentSearcher;
 import org.eclipse.lsp4xml.services.extensions.CompletionParticipantAdapter;
 import org.eclipse.lsp4xml.services.extensions.ICompletionRequest;
 import org.eclipse.lsp4xml.services.extensions.ICompletionResponse;
@@ -91,7 +88,9 @@ public class MavenCompletionParticipant extends CompletionParticipantAdapter {
 		}
 		switch (parent.getLocalName()) {
 		case "version":
-			collectVersionCompletion(request, response);
+			if (!parent.getParentElement().getLocalName().equals("parent")){
+				collectVersionCompletion(request, response);
+			}
 			break;
 		case "scope":
 			collectSimpleCompletionItems(Arrays.asList(DependencyScope.values()), DependencyScope::getName, DependencyScope::getDescription, request, response);
@@ -100,7 +99,6 @@ public class MavenCompletionParticipant extends CompletionParticipantAdapter {
 			collectSimpleCompletionItems(Arrays.asList(Phase.ALL_STANDARD_PHASES), phase -> phase.id, phase -> phase.description, request, response);
 			break;
 		case "groupId":
-
 			if (!parent.getParentElement().getLocalName().equals("parent")){
 				collectSimpleCompletionItems(ArtifactSearcherManager.getInstance().searchLocalGroupIds(null), Function.identity(), Function.identity(), request, response);
 			}
@@ -270,25 +268,13 @@ public class MavenCompletionParticipant extends CompletionParticipantAdapter {
 
 		Range range = XMLPositionUtility.createRange(node.getStartTagCloseOffset() + 1, node.getEndTagOpenOffset(),
 				doc);
-
-		try {
-			// TODO: Get the File properly without using substring
-			LocalSubModuleSearcher subModuleSearcher = LocalSubModuleSearcher.getInstance();
-			subModuleSearcher.setPomFile(new File(doc.getDocumentURI().substring(5)));
-			for (String module : subModuleSearcher.getSubModules()) {
-				String label = module;
-				CompletionItem item = new CompletionItem();
-				item.setLabel(label);
-				String insertText = label;
-				item.setKind(CompletionItemKind.Property);
-				item.setDocumentation(Either.forLeft(""));
-				item.setFilterText(insertText);
-				item.setTextEdit(new TextEdit(range, insertText));
-				item.setInsertTextFormat(InsertTextFormat.PlainText);
-				response.addCompletionItem(item);
-			}
-		} catch (IOException | XmlPullParserException e) {
-			e.printStackTrace();
+		MavenProject mavenProject = cache.getLastSuccessfulMavenProject(doc);
+		if (mavenProject == null) {
+			return;
+		}
+		Model model = mavenProject.getModel();
+		for (String module : model.getModules()) {
+			response.addCompletionItem(toCompletionItem(module, "", range));
 		}
 
 	}
@@ -315,65 +301,26 @@ public class MavenCompletionParticipant extends CompletionParticipantAdapter {
 		DOMDocument doc = request.getXMLDocument();
 		Range range = XMLPositionUtility.createRange(node.getStartTagCloseOffset() + 1, node.getEndTagOpenOffset(),
 				doc);
-		try {
-			ParentSearcher.getInstance().setPomFile(new java.io.File(doc.getDocumentURI().substring(5)));
-		} catch (IOException | XmlPullParserException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		MavenProject mavenProject = cache.getLastSuccessfulMavenProject(doc);
+		if (mavenProject == null) {
+			return;
 		}
+		Model model = mavenProject.getModel();
+		
 		switch (node.getLocalName()) {
 		case "artifactId":
-			response.addCompletionItem(getParentArtifactId(doc, range));
+			response.addCompletionItem(toCompletionItem(model.getParent().getArtifactId(), "The artifactId of the parent maven module.", range));
 			break;
 		case "groupId":
-			response.addCompletionItem(getParentGroupID(doc, range));
+			response.addCompletionItem(toCompletionItem(model.getParent().getGroupId(), "The groupId of the parent maven module.", range));
 			break;
 		case "version":
-			response.addCompletionItem(getParentVersion(doc, range));
+			response.addCompletionItem(toCompletionItem(model.getParent().getVersion(), "The version of the parent maven module.", range));
 			break;
 		default:
 			break;
 		}
 
-	}
-
-	private CompletionItem getParentGroupID(DOMDocument doc, Range range) {
-		String label = ParentSearcher.getInstance().getParentGroupId();
-		CompletionItem item = new CompletionItem();
-		item.setLabel(label);
-		String insertText = label;
-		item.setKind(CompletionItemKind.Property);
-		item.setDocumentation(Either.forLeft("The groupId of the parent maven module."));
-		item.setFilterText(insertText);
-		item.setTextEdit(new TextEdit(range, insertText));
-		item.setInsertTextFormat(InsertTextFormat.PlainText);
-		return item;
-	}
-
-	private CompletionItem getParentVersion(DOMDocument doc, Range range) {
-		String label = ParentSearcher.getInstance().getParentVersion();
-		CompletionItem item = new CompletionItem();
-		item.setLabel(label);
-		String insertText = label;
-		item.setKind(CompletionItemKind.Property);
-		item.setDocumentation(Either.forLeft("The version of the parent maven module."));
-		item.setFilterText(insertText);
-		item.setTextEdit(new TextEdit(range, insertText));
-		item.setInsertTextFormat(InsertTextFormat.PlainText);
-		return item;
-	}
-
-	private CompletionItem getParentArtifactId(DOMDocument doc, Range range) {
-		String label = ParentSearcher.getInstance().getParentArtifactId();
-		CompletionItem item = new CompletionItem();
-		item.setLabel(label);
-		String insertText = label;
-		item.setKind(CompletionItemKind.Property);
-		item.setDocumentation(Either.forLeft("The artifactId of the parent maven module."));
-		item.setFilterText(insertText);
-		item.setTextEdit(new TextEdit(range, insertText));
-		item.setInsertTextFormat(InsertTextFormat.PlainText);
-		return item;
 	}
 
 	private <T> void collectSimpleCompletionItems(Collection<T> items, Function<T, String> insertionTextExtractor, Function<T, String> documentationExtractor, ICompletionRequest request, ICompletionResponse response) {
