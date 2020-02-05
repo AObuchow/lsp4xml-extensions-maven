@@ -49,8 +49,6 @@ public class RemoteRepositoryIndexSearcher {
 	public static final int COMPARISON_TYPE_LESS = 2; // 0010
 	public static final int COMPARISON_TYPE_EQUALS = 4; // 0100
 
-	private static final RemoteRepositoryIndexSearcher INSTANCE = new RemoteRepositoryIndexSearcher();
-
 	private Indexer indexer;
 
 	private IndexUpdater indexUpdater;
@@ -73,24 +71,7 @@ public class RemoteRepositoryIndexSearcher {
 
 	private Set<String> brokenContexts = Collections.synchronizedSet(new HashSet<String>());
 
-	private RemoteRepositoryIndexSearcher() {
-	}
-
-	public static RemoteRepositoryIndexSearcher getInstance() {
-		return INSTANCE;
-	}
-
-	/**
-	 * Returns a Maven index sync request in a CompletableFuture. This function must
-	 * be called before this class can be used, and the returned CompletableFuture
-	 * must be run for the maven indexer to work correctly.
-	 * 
-	 * @param plexusContainer
-	 * @return CompletableFuture<Void> syncRequest - must be run in order to update
-	 *         the Maven index before use
-	 * @throws ComponentLookupException
-	 */
-	public CompletableFuture<Void> init(PlexusContainer plexusContainer) throws ComponentLookupException {
+	public RemoteRepositoryIndexSearcher(PlexusContainer plexusContainer) throws ComponentLookupException {
 		if (syncRequest == null) {
 			indexer = plexusContainer.lookup(Indexer.class);
 			indexUpdater = plexusContainer.lookup(IndexUpdater.class);
@@ -104,6 +85,17 @@ public class RemoteRepositoryIndexSearcher {
 
 			syncRequest = syncIndex();
 		}
+	}
+
+	/**
+	 * Returns a Maven index sync request in a {@code CompletableFuture}. The
+	 * {@code CompletableFuture} must be run for the Maven indexer to work
+	 * correctly.
+	 * 
+	 * @return {@code CompletableFuture<Void>}syncRequest - must be run in order to
+	 *         update the Maven index before use
+	 */
+	public CompletableFuture<Void> getSyncRequest() {
 		return syncRequest;
 	}
 
@@ -135,7 +127,6 @@ public class RemoteRepositoryIndexSearcher {
 	}
 
 	public CompletableFuture<Set<String>> getArtifactVersions(Artifact artifactToSearch) {
-		// final BooleanQuery query = createArtifactVersionQuery(artifactToSearch);
 		final Query groupIdQ = indexer.constructQuery(MAVEN.GROUP_ID, artifactToSearch.getGroupId(), SearchType.EXACT);
 		final Query artifactIdQ = indexer.constructQuery(MAVEN.ARTIFACT_ID, artifactToSearch.getArtifactId(),
 				SearchType.EXACT);
@@ -163,7 +154,8 @@ public class RemoteRepositoryIndexSearcher {
 	}
 
 	/**
-	 * @param artifactToSearch a CompletableFuture containing a {@code Map<String artifactId, String artifactDescription>} 
+	 * @param artifactToSearch a CompletableFuture containing a
+	 *                         {@code Map<String artifactId, String artifactDescription>}
 	 * @return
 	 */
 	public CompletableFuture<Map<String, String>> getArtifactIds(Artifact artifactToSearch) {
@@ -242,29 +234,39 @@ public class RemoteRepositoryIndexSearcher {
 		for (Entry<String, IndexingContext> context : indexingContexts.entrySet()) {
 			Date contextCurrentTimestamp = context.getValue().getTimestamp();
 			IndexUpdateRequest updateRequest = new IndexUpdateRequest(context.getValue(), resourceFetcher);
-			final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+			try {
+				if (context.getValue().getIndexWriter() != null) {
+					final CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
+						try {
+							IndexUpdateResult updateResult = indexUpdater.fetchAndUpdateIndex(updateRequest);
+							if (updateResult.isFullUpdate()) {
+								System.out.println("Full update happened!");
+							} else if (updateResult.getTimestamp().equals(contextCurrentTimestamp)) {
+								System.out.println("No update needed, index is up to date!");
+							} else {
+								System.out.println("Incremental update happened, change covered "
+										+ contextCurrentTimestamp + " - " + updateResult.getTimestamp() + " period.");
+							}
 
-				try {
-					IndexUpdateResult updateResult = indexUpdater.fetchAndUpdateIndex(updateRequest);
-					if (updateResult.isFullUpdate()) {
-						System.out.println("Full update happened!");
-					} else if (updateResult.getTimestamp().equals(contextCurrentTimestamp)) {
-						System.out.println("No update needed, index is up to date!");
-					} else {
-						System.out.println("Incremental update happened, change covered " + contextCurrentTimestamp
-								+ " - " + updateResult.getTimestamp() + " period.");
-					}
-				} catch (IOException e) {
-					// TODO: Fix this - the maven central context gets reported as broken when
-					// another context is broken
-					brokenContexts.add(context.getKey());
-					System.out.println("Invalid Context: " + context.getValue().getRepositoryId() + " @ "
-							+ context.getValue().getRepositoryUrl());
-					e.printStackTrace();
-					// TODO: Maybe scan for maven metadata to use as an alternative to retrieve GAV
+						} catch (IOException e) {
+							// TODO: Fix this - the maven central context gets reported as broken when
+							// another context is broken
+							brokenContexts.add(context.getKey());
+							System.out.println("Invalid Context: " + context.getValue().getRepositoryId() + " @ "
+									+ context.getValue().getRepositoryUrl());
+							e.printStackTrace();
+							// TODO: Maybe scan for maven metadata to use as an alternative to retrieve GAV
+						}
+					});
+					futures.add(future);
 				}
-			});
-			futures.add(future);
+				else {
+					System.out.println("INDEX WRITER IS NULL");
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 		return CompletableFuture.allOf(futures.toArray(new CompletableFuture[futures.size()]));

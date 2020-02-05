@@ -53,18 +53,23 @@ public class MavenCompletionParticipant extends CompletionParticipantAdapter {
 	private final LocalRepositorySearcher localRepositorySearcher = new LocalRepositorySearcher();
 	private final MavenProjectCache cache;
 	private CompletableFuture<Void> indexSyncRequest;
-	RemoteRepositoryIndexSearcher artifactVersionSearcher = RemoteRepositoryIndexSearcher.getInstance();
+	RemoteRepositoryIndexSearcher artifactVersionSearcher;
 
 	public MavenCompletionParticipant(MavenProjectCache cache) {
 		this.cache = cache;
-
 		try {
-			indexSyncRequest = artifactVersionSearcher.init(cache.getPlexusContainer());
+			artifactVersionSearcher = new RemoteRepositoryIndexSearcher(cache.getPlexusContainer());
+			indexSyncRequest = artifactVersionSearcher.getSyncRequest();
 			indexSyncRequest.get(500, TimeUnit.MILLISECONDS);
 		} catch (ComponentLookupException | InterruptedException | ExecutionException | TimeoutException e) {
 			e.printStackTrace();
 		}
+	}
 
+	// TODO: Move this up into MavenPlugin as the Maven index will likely be
+	// required for other classes eg. MavenDiagnosticParticipant
+	public void closeIndexContext() {
+		artifactVersionSearcher.closeContext();
 	}
 
 	@Override
@@ -259,7 +264,8 @@ public class MavenCompletionParticipant extends CompletionParticipantAdapter {
 					}
 					break;
 				case "artifactId":
-					for (Map.Entry<String, String> entry : artifactVersionSearcher.getArtifactIds(artifactToSearch).get().entrySet()) {
+					for (Map.Entry<String, String> entry : artifactVersionSearcher.getArtifactIds(artifactToSearch)
+							.get().entrySet()) {
 						response.addCompletionItem(toCompletionItem(entry.getKey(), entry.getValue(), range));
 					}
 					break;
@@ -270,8 +276,7 @@ public class MavenCompletionParticipant extends CompletionParticipantAdapter {
 					break;
 				}
 			} catch (InterruptedException e) {
-				response.addCompletionItem(
-						toCompletionItem("Error: Remote index search interrupted", "Error", range));
+				response.addCompletionItem(toCompletionItem("Error: Remote index search interrupted", "Error", range));
 				e.printStackTrace();
 			} catch (ExecutionException e) {
 				response.addCompletionItem(

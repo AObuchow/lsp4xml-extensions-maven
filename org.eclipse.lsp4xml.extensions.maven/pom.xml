@@ -1,22 +1,22 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
 	<modelVersion>4.0.0</modelVersion>
-
+	
 	<groupId>org.lsp4xml</groupId>
 	<artifactId>maven-xmlls-extension</artifactId>
 	<version>0.0.3-SNAPSHOT</version>
-
+	
 	<licenses>
 		<license>
 			<name>Eclipse Public License (EPL) v2.0</name>
 			<url>https://www.eclipse.org/org/documents/epl-2.0/EPL-2.0.html</url>
 		</license>
 	</licenses>
-
+	
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 	</properties>
-
+	
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
@@ -27,7 +27,7 @@
 		<dependency>
 			<groupId>org.lsp4xml</groupId>
 			<artifactId>org.eclipse.lsp4xml</artifactId>
-			<version>0.9.1</version>
+			<version>0.9.2-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.maven</groupId>
@@ -80,17 +80,28 @@
 			<version>4.5.11</version>
 		</dependency>
 	</dependencies>
-
+	
 	<build>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
+				<version>6.0.3</version>
 			</plugin>
 		</plugins>
 	</build>
-
+	
 	<repositories>
+		<repository>
+			<id>lsp4xml-snapshots</id>
+			<url>https://oss.jfrog.org/artifactory/libs-snapshot</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
 		<repository>
 			<id>lsp4xml-releases</id>
 			<url>https://dl.bintray.com/lsp4xml/releases</url>
@@ -102,7 +113,7 @@
 			</releases>
 		</repository>
 	</repositories>
-
+	
 	<distributionManagement>
 		<snapshotRepository>
 			<id>github</id>

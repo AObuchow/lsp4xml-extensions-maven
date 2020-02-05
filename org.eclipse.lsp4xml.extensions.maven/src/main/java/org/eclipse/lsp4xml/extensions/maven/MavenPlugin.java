@@ -21,8 +21,6 @@ import org.codehaus.plexus.classworlds.realm.ClassRealm;
 import org.codehaus.plexus.classworlds.realm.NoSuchRealmException;
 import org.eclipse.lsp4j.InitializeParams;
 import org.eclipse.lsp4xml.dom.DOMDocument;
-import org.eclipse.lsp4xml.extensions.maven.searcher.RemoteRepositoryIndexSearcher;
-import org.eclipse.lsp4xml.services.extensions.ICompletionParticipant;
 import org.eclipse.lsp4xml.services.extensions.IXMLExtension;
 import org.eclipse.lsp4xml.services.extensions.XMLExtensionsRegistry;
 import org.eclipse.lsp4xml.services.extensions.diagnostics.IDiagnosticsParticipant;
@@ -40,7 +38,7 @@ public class MavenPlugin implements IXMLExtension {
 	
 	public static final String DEFAULT_LOCAL_REPOSITORY_PATH = System.getProperty("user.home") + "/.m2/repository";
 
-	private ICompletionParticipant completionParticipant;
+	private MavenCompletionParticipant completionParticipant;
 	private IDiagnosticsParticipant diagnosticParticipant;
 	private PlexusContainer container;
 	private MavenProjectCache cache;
@@ -101,11 +99,11 @@ public class MavenPlugin implements IXMLExtension {
 
 	@Override
 	public void stop(XMLExtensionsRegistry registry) {
+		completionParticipant.closeIndexContext();
 		registry.unregisterCompletionParticipant(completionParticipant);
 		registry.unregisterDiagnosticsParticipant(diagnosticParticipant);
 		cache = null;
 		container = null;
-		RemoteRepositoryIndexSearcher.getInstance().closeContext();
 	}
 
 	public static boolean match(DOMDocument document) {

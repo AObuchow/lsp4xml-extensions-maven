@@ -73,7 +73,7 @@ public class ClientServerConnection {
 
 	public void stop() {
 		languageServer.shutdown();
-		server.cancel(true);
+		//server.cancel(false);
 		clientFuture.cancel(true);
 	}
 
