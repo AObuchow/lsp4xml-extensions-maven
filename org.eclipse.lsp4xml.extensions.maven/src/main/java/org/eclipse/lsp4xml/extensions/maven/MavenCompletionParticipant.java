@@ -279,7 +279,8 @@ public class MavenCompletionParticipant extends CompletionParticipantAdapter {
 		} catch (TimeoutException e) {
 			// nothing to log, some work still pending
 		}
-		items.forEach(response::addCompletionItem);
+		
+		items.stream().distinct().forEach(response::addCompletionItem);
 	}
 
 	private void collectSubModuleCompletion(ICompletionRequest request, ICompletionResponse response) {
