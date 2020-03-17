@@ -18,42 +18,19 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
+import org.apache.maven.index.artifact.Gav;
 
 public class LocalRepositorySearcher {
 	
-	public static class GroupIdArtifactId {
-		public final String groupId;
-		public final String artifactId;
-		
-		public GroupIdArtifactId(String groupId, String artifactId) {
-			this.groupId = groupId;
-			this.artifactId = artifactId;
-		}
-
-		@Override
-		public boolean equals(Object obj) {
-			return obj != null &&
-				obj.getClass() == getClass() &&
-				Objects.equals(this.groupId, ((GroupIdArtifactId)obj).groupId) &&
-				Objects.equals(this.artifactId, ((GroupIdArtifactId)obj).artifactId);
-		}
-
-		@Override
-		public int hashCode() {
-			return Objects.hash(this.groupId, this.artifactId);
-		}
-	}
-
 	private File localRepository;
 
 	public LocalRepositorySearcher(File localRepository) {
@@ -61,22 +38,22 @@ public class LocalRepositorySearcher {
 		
 	}
 
-	private Map<File, Map<GroupIdArtifactId, ArtifactVersion>> cache = new HashMap<>();
+	private Map<File, Collection<Gav>> cache = new HashMap<>();
 
 	public Set<String> searchGroupIds() throws IOException {
-		return getLocalArtifactsLastVersion().keySet().stream().map(ga -> ga.groupId).distinct().collect(Collectors.toSet());
+		return getLocalArtifactsLastVersion().stream().map(Gav::getGroupId).distinct().collect(Collectors.toSet());
 	}
 
 	public Set<String> searchPluginGroupIds() throws IOException {
-		return getLocalPluginArtifacts().keySet().stream().map(ga -> ga.groupId).distinct().collect(Collectors.toSet());
+		return getLocalPluginArtifacts().stream().map(Gav::getGroupId).distinct().collect(Collectors.toSet());
 	}
 
-	public Map<GroupIdArtifactId, ArtifactVersion> getLocalPluginArtifacts() throws IOException {
-		return getLocalArtifactsLastVersion().entrySet().stream().filter(entry -> entry.getKey().artifactId.contains("-plugin")).collect(Collectors.toMap(Entry::getKey, Entry::getValue));
+	public Collection<Gav> getLocalPluginArtifacts() throws IOException {
+		return getLocalArtifactsLastVersion().stream().filter(gav -> gav.getArtifactId().contains("-plugin")).collect(Collectors.toSet());
 	}
 
-	public Map<GroupIdArtifactId, ArtifactVersion> getLocalArtifactsLastVersion() throws IOException {
-		Map<GroupIdArtifactId, ArtifactVersion> res = cache.get(localRepository);
+	public Collection<Gav> getLocalArtifactsLastVersion() throws IOException {
+		Collection<Gav> res = cache.get(localRepository);
 		if (res == null) {
 			res = computeLocalArtifacts();
 			Path localRepoPath = localRepository.toPath();
@@ -98,9 +75,9 @@ public class LocalRepositorySearcher {
 		return res;
 	}
 
-	public Map<GroupIdArtifactId, ArtifactVersion> computeLocalArtifacts() throws IOException {
+	public Collection<Gav> computeLocalArtifacts() throws IOException {
 		final Path repoPath = localRepository.toPath();
-		Map<GroupIdArtifactId, ArtifactVersion> groupIdArtifactIdToVersion = new HashMap<>();
+		Map<String, Gav> groupIdArtifactIdToVersion = new HashMap<>();
 		Files.walkFileTree(repoPath, Collections.emptySet(), 10, new SimpleFileVisitor<Path>() { 
 			@Override
 			public FileVisitResult preVisitDirectory(Path file, BasicFileAttributes attrs) throws IOException {
@@ -112,17 +89,23 @@ public class LocalRepositorySearcher {
 					ArtifactVersion version = new DefaultArtifactVersion(artifactFolderPath.getFileName().toString());
 					String artifactId = artifactFolderPath.getParent().getFileName().toString();
 					String groupId = artifactFolderPath.getParent().getParent().toString().replace(artifactFolderPath.getFileSystem().getSeparator(), ".");
-					GroupIdArtifactId groupIdArtifactId = new GroupIdArtifactId(groupId, artifactId);
-					ArtifactVersion existingVersion = groupIdArtifactIdToVersion.get(groupIdArtifactId);
-					if (existingVersion == null || existingVersion.compareTo(version) < 0 || (!version.toString().endsWith("-SNAPSHOT") && existingVersion.toString().endsWith("-SNAPSHOT"))) {
-						groupIdArtifactIdToVersion.put(groupIdArtifactId, version);
+					String groupIdArtifactId = groupId + ':' + artifactId;
+					Gav existingGav = groupIdArtifactIdToVersion.get(groupIdArtifactId);
+					boolean replace = existingGav == null;
+					if (existingGav != null) {
+						ArtifactVersion existingVersion = new DefaultArtifactVersion(existingGav.getVersion());
+						replace |= existingVersion.compareTo(version) < 0;
+						replace |= (existingVersion.toString().endsWith("-SNAPSHOT") && !version.toString().endsWith("-SNAPSHOT"));
+					}
+					if (replace) {
+						groupIdArtifactIdToVersion.put(groupIdArtifactId, new Gav(groupId, artifactId, version.toString()));
 					}
 					return FileVisitResult.SKIP_SUBTREE;
 				}
 				return FileVisitResult.CONTINUE;
 			}
 		});
-		return groupIdArtifactIdToVersion;
+		return groupIdArtifactIdToVersion.values();
 	}
 
 }

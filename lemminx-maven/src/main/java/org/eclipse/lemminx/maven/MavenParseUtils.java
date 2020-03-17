@@ -20,7 +20,7 @@ public class MavenParseUtils {
 		}
 		try {
 			for (DOMNode tag : node.getParentElement().getChildren()) {
-				if (tag != null && tag.hasChildNodes() && tag.getChild(0).isElement()) {
+				if (tag != null && tag.hasChildNodes()) {
 					String value = tag.getChild(0).getNodeValue();
 					if (value == null) {
 						continue;
