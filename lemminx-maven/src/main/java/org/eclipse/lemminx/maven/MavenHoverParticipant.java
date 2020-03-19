@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -20,21 +21,22 @@ import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.index.ArtifactInfo;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.plugin.MavenPluginManager;
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
 import org.apache.maven.plugin.descriptor.Parameter;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.project.MavenProject;
+import org.eclipse.lemminx.dom.DOMDocument;
+import org.eclipse.lemminx.dom.DOMElement;
+import org.eclipse.lemminx.dom.DOMNode;
 import org.eclipse.lemminx.maven.searcher.RemoteRepositoryIndexSearcher;
+import org.eclipse.lemminx.services.extensions.IHoverParticipant;
+import org.eclipse.lemminx.services.extensions.IHoverRequest;
+import org.eclipse.lemminx.services.extensions.IPositionRequest;
 import org.eclipse.lsp4j.Hover;
 import org.eclipse.lsp4j.MarkupContent;
-import org.eclipse.lsp4xml.dom.DOMDocument;
-import org.eclipse.lsp4xml.dom.DOMElement;
-import org.eclipse.lsp4xml.dom.DOMNode;
-import org.eclipse.lsp4xml.services.extensions.IHoverParticipant;
-import org.eclipse.lsp4xml.services.extensions.IHoverRequest;
-import org.eclipse.lsp4xml.services.extensions.IPositionRequest;
 
 public class MavenHoverParticipant implements IHoverParticipant {
 	private final MavenProjectCache cache;
@@ -48,17 +50,17 @@ public class MavenHoverParticipant implements IHoverParticipant {
 	}
 
 	@Override
-	public Hover onAttributeName(IHoverRequest request) throws Exception {
+	public String onAttributeName(IHoverRequest request) throws Exception {
 		return null;
 	}
 
 	@Override
-	public Hover onAttributeValue(IHoverRequest request) throws Exception {
+	public String onAttributeValue(IHoverRequest request) throws Exception {
 		return null;
 	}
 
 	@Override
-	public Hover onTag(IHoverRequest request) throws Exception {
+	public String onTag(IHoverRequest request) throws Exception {
 		DOMNode tag = request.getNode();
 		DOMElement parent = tag.getParentElement();
 		DOMElement grandParent = parent.getParentElement();
@@ -72,8 +74,6 @@ public class MavenHoverParticipant implements IHoverParticipant {
 		boolean isParentDeclaration = "parent".equals(parent.getLocalName())
 				|| (grandParent != null && "parent".equals(grandParent.getLocalName()));
 
-		Hover response = new Hover();
-		response.setContents(new MarkupContent("plaintext", "Empty"));
 		switch (parent.getLocalName()) {
 		case "configuration":
 			return collectPuginConfiguration(request);
@@ -97,8 +97,8 @@ public class MavenHoverParticipant implements IHoverParticipant {
 		return null;
 	}
 
-	private Hover collectArtifactDescription(IHoverRequest request, boolean isPlugin) {
-		Collection<Hover> possibleHovers = Collections.synchronizedSet(new LinkedHashSet<>());
+	private String collectArtifactDescription(IHoverRequest request, boolean isPlugin) {
+		Collection<String> possibleHovers = Collections.synchronizedSet(new LinkedHashSet<>());
 		DOMNode node = request.getNode();
 		DOMDocument doc = request.getXMLDocument();
 
@@ -113,7 +113,7 @@ public class MavenHoverParticipant implements IHoverParticipant {
 
 		try {
 			CompletableFuture.allOf(remoteArtifactRepositories.stream().map(repository -> {
-				final Hover updatingItem = toHover("Updating index for " + repository);
+				final String updatingItem = "Updating index for " + repository;
 				possibleHovers.add(updatingItem);
 
 				return indexSearcher.getIndexingContext(URI.create(repository)).thenAccept(index -> {
@@ -121,13 +121,13 @@ public class MavenHoverParticipant implements IHoverParticipant {
 						// TODO: make a new function that gets only the exact artifact ID match, or just
 						// take the first thing given
 						indexSearcher.getPluginArtifactIds(artifactToSearch, index).stream()
-								.filter(artifactInfo -> artifactInfo.getDescription() != null)
-								.map(artifactInfo -> toHover(artifactInfo.getDescription()))
+								.map(ArtifactInfo::getDescription)
+								.filter(Objects::nonNull)
 								.forEach(possibleHovers::add);
 					} else {
 						indexSearcher.getArtifactIds(artifactToSearch, index).stream()
-								.filter(artifactInfo -> artifactInfo.getDescription() != null)
-								.map(artifactInfo -> toHover(artifactInfo.getDescription()))
+								.map(ArtifactInfo::getDescription)
+								.filter(Objects::nonNull)
 								.forEach(possibleHovers::add);
 					}
 				}).whenComplete((ok, error) -> possibleHovers.remove(updatingItem));
@@ -144,30 +144,26 @@ public class MavenHoverParticipant implements IHoverParticipant {
 		return possibleHovers.iterator().next();
 	}
 
-	private Hover collectGoals(IPositionRequest request) {
+	private String collectGoals(IPositionRequest request) {
 		DOMNode node = request.getNode();
 		PluginDescriptor pluginDescriptor = MavenPluginUtils.getContainingPluginDescriptor(request, cache, pluginManager);
 		
 		for (MojoDescriptor mojo : pluginDescriptor.getMojos()) {
 			if (!node.getChild(0).getNodeValue().trim().isEmpty() && node.hasChildNodes()
 					&& node.getChild(0).getNodeValue().equals(mojo.getGoal())) {
-				Hover hover = new Hover();
-				hover.setContents(new MarkupContent("plaintext", mojo.getDescription()));
-				return hover;
+				return mojo.getDescription();
 			}
 		}
 		return null;
 	}
 
-	private Hover collectPuginConfiguration(IPositionRequest request) {
+	private String collectPuginConfiguration(IPositionRequest request) {
 		List<Parameter> parameters = MavenPluginUtils.collectPluginConfigurationParameters(request, cache, pluginManager);
 		DOMNode node = request.getNode();
 		
 		for (Parameter parameter : parameters) {
 			if (node.getLocalName().equals(parameter.getName())) {
-				Hover hover = new Hover();
-				hover.setContents(MavenPluginUtils.getMarkupDescription(parameter));
-				return hover;
+				return MavenPluginUtils.getMarkupDescription(parameter).getValue();
 			}
 		}
 		return null;
@@ -177,6 +173,12 @@ public class MavenHoverParticipant implements IHoverParticipant {
 		Hover hover = new Hover();
 		hover.setContents(new MarkupContent("plaintext", description));
 		return hover;
+	}
+
+	@Override
+	public String onText(IHoverRequest request) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 }

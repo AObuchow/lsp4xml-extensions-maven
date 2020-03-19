@@ -16,11 +16,11 @@ import java.io.IOException;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
+import org.eclipse.lemminx.dom.DOMDocument;
+import org.eclipse.lemminx.dom.DOMNode;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Range;
-import org.eclipse.lsp4xml.dom.DOMDocument;
-import org.eclipse.lsp4xml.dom.DOMNode;
 
 public class SubModuleValidator {
 	Model model;

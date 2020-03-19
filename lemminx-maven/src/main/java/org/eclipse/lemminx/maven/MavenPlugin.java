@@ -23,16 +23,16 @@ import org.codehaus.plexus.classworlds.ClassWorld;
 import org.codehaus.plexus.classworlds.realm.ClassRealm;
 import org.codehaus.plexus.classworlds.realm.NoSuchRealmException;
 import org.codehaus.plexus.component.repository.exception.ComponentLookupException;
+import org.eclipse.lemminx.dom.DOMDocument;
 import org.eclipse.lemminx.maven.searcher.LocalRepositorySearcher;
 import org.eclipse.lemminx.maven.searcher.RemoteRepositoryIndexSearcher;
+import org.eclipse.lemminx.services.extensions.ICompletionParticipant;
+import org.eclipse.lemminx.services.extensions.IHoverParticipant;
+import org.eclipse.lemminx.services.extensions.IXMLExtension;
+import org.eclipse.lemminx.services.extensions.XMLExtensionsRegistry;
+import org.eclipse.lemminx.services.extensions.diagnostics.IDiagnosticsParticipant;
+import org.eclipse.lemminx.services.extensions.save.ISaveContext;
 import org.eclipse.lsp4j.InitializeParams;
-import org.eclipse.lsp4xml.dom.DOMDocument;
-import org.eclipse.lsp4xml.services.extensions.ICompletionParticipant;
-import org.eclipse.lsp4xml.services.extensions.IHoverParticipant;
-import org.eclipse.lsp4xml.services.extensions.IXMLExtension;
-import org.eclipse.lsp4xml.services.extensions.XMLExtensionsRegistry;
-import org.eclipse.lsp4xml.services.extensions.diagnostics.IDiagnosticsParticipant;
-import org.eclipse.lsp4xml.services.extensions.save.ISaveContext;
 
 /**
  * Extension for pom.xml.

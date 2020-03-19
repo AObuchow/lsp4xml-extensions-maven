@@ -26,9 +26,9 @@ import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.project.MavenProject;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.repository.RemoteRepository.Builder;
+import org.eclipse.lemminx.dom.DOMNode;
+import org.eclipse.lemminx.services.extensions.IPositionRequest;
 import org.eclipse.lsp4j.MarkupContent;
-import org.eclipse.lsp4xml.dom.DOMNode;
-import org.eclipse.lsp4xml.services.extensions.IPositionRequest;
 
 public class MavenPluginUtils {
 	

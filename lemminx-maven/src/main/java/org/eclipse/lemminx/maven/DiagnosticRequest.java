@@ -10,12 +10,12 @@ package org.eclipse.lemminx.maven;
 
 import java.util.List;
 
+import org.eclipse.lemminx.dom.DOMDocument;
+import org.eclipse.lemminx.dom.DOMElement;
+import org.eclipse.lemminx.dom.DOMNode;
+import org.eclipse.lemminx.utils.XMLPositionUtility;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.Range;
-import org.eclipse.lsp4xml.dom.DOMDocument;
-import org.eclipse.lsp4xml.dom.DOMElement;
-import org.eclipse.lsp4xml.dom.DOMNode;
-import org.eclipse.lsp4xml.utils.XMLPositionUtility;
 
 public class DiagnosticRequest {
 	private DOMNode node;

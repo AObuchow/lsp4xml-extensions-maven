@@ -11,13 +11,12 @@ package org.eclipse.lemminx.maven;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.DefaultArtifact;
 import org.apache.maven.artifact.handler.DefaultArtifactHandler;
-import org.apache.maven.artifact.versioning.OverConstrainedVersionException;
 import org.apache.maven.model.Dependency;
+import org.eclipse.lemminx.dom.DOMDocument;
+import org.eclipse.lemminx.dom.DOMNode;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Range;
-import org.eclipse.lsp4xml.dom.DOMDocument;
-import org.eclipse.lsp4xml.dom.DOMNode;
 
 public class VersionValidator {
 

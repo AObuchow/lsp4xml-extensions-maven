@@ -18,6 +18,9 @@ import java.util.Objects;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import org.eclipse.lemminx.commons.BadLocationException;
+import org.eclipse.lemminx.commons.TextDocument;
+import org.eclipse.lemminx.utils.StringUtils;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.InsertTextFormat;
@@ -26,9 +29,6 @@ import org.eclipse.lsp4j.MarkupKind;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.eclipse.lsp4xml.commons.BadLocationException;
-import org.eclipse.lsp4xml.commons.TextDocument;
-import org.eclipse.lsp4xml.utils.StringUtils;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.stream.JsonReader;

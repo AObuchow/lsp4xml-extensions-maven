@@ -15,10 +15,10 @@ import java.net.URI;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.maven.project.MavenProject;
+import org.eclipse.lemminx.commons.TextDocument;
+import org.eclipse.lemminx.dom.DOMDocument;
 import org.eclipse.lemminx.maven.MavenPlugin;
 import org.eclipse.lemminx.maven.MavenProjectCache;
-import org.eclipse.lsp4xml.commons.TextDocument;
-import org.eclipse.lsp4xml.dom.DOMDocument;
 import org.junit.Test;
 
 public class MavenProjectCacheTest {

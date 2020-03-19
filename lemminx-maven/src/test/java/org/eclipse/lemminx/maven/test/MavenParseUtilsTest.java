@@ -11,10 +11,10 @@ package org.eclipse.lemminx.maven.test;
 import static org.junit.Assert.assertEquals;
 
 import org.apache.maven.Maven;
+import org.eclipse.lemminx.commons.TextDocument;
+import org.eclipse.lemminx.dom.DOMDocument;
+import org.eclipse.lemminx.dom.DOMParser;
 import org.eclipse.lemminx.maven.MavenParseUtils;
-import org.eclipse.lsp4xml.commons.TextDocument;
-import org.eclipse.lsp4xml.dom.DOMDocument;
-import org.eclipse.lsp4xml.dom.DOMParser;
 import org.junit.Test;
 
 public class MavenParseUtilsTest {

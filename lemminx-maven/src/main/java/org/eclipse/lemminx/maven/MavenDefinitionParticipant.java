@@ -16,16 +16,16 @@ import java.util.Optional;
 import org.apache.maven.Maven;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.project.MavenProject;
+import org.eclipse.lemminx.dom.DOMElement;
+import org.eclipse.lemminx.dom.DOMNode;
 import org.eclipse.lemminx.maven.searcher.LocalRepositorySearcher;
+import org.eclipse.lemminx.services.extensions.IDefinitionParticipant;
+import org.eclipse.lemminx.services.extensions.IDefinitionRequest;
+import org.eclipse.lemminx.utils.XMLPositionUtility;
 import org.eclipse.lsp4j.LocationLink;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
-import org.eclipse.lsp4xml.dom.DOMElement;
-import org.eclipse.lsp4xml.dom.DOMNode;
-import org.eclipse.lsp4xml.services.extensions.IDefinitionParticipant;
-import org.eclipse.lsp4xml.services.extensions.IDefinitionRequest;
-import org.eclipse.lsp4xml.utils.XMLPositionUtility;
 
 public class MavenDefinitionParticipant implements IDefinitionParticipant {
 

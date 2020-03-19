@@ -17,6 +17,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.function.Predicate;
 
+import org.eclipse.lemminx.XMLServerLauncher;
 import org.eclipse.lsp4j.ClientCapabilities;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.InitializeParams;
@@ -30,7 +31,6 @@ import org.eclipse.lsp4j.jsonrpc.Launcher;
 import org.eclipse.lsp4j.launch.LSPLauncher;
 import org.eclipse.lsp4j.services.LanguageClient;
 import org.eclipse.lsp4j.services.LanguageServer;
-import org.eclipse.lsp4xml.XMLServerLauncher;
 
 public class ClientServerConnection {
 

@@ -44,10 +44,18 @@ import org.apache.maven.plugin.MavenPluginManager;
 import org.apache.maven.plugin.descriptor.MojoDescriptor;
 import org.apache.maven.plugin.descriptor.PluginDescriptor;
 import org.apache.maven.project.MavenProject;
-import org.apache.maven.repository.RepositorySystem;
+import org.eclipse.lemminx.commons.BadLocationException;
+import org.eclipse.lemminx.commons.TextDocument;
+import org.eclipse.lemminx.dom.DOMDocument;
+import org.eclipse.lemminx.dom.DOMElement;
+import org.eclipse.lemminx.dom.DOMNode;
 import org.eclipse.lemminx.maven.searcher.LocalRepositorySearcher;
 import org.eclipse.lemminx.maven.searcher.RemoteRepositoryIndexSearcher;
 import org.eclipse.lemminx.maven.snippets.SnippetRegistry;
+import org.eclipse.lemminx.services.extensions.CompletionParticipantAdapter;
+import org.eclipse.lemminx.services.extensions.ICompletionRequest;
+import org.eclipse.lemminx.services.extensions.ICompletionResponse;
+import org.eclipse.lemminx.utils.XMLPositionUtility;
 import org.eclipse.lsp4j.CompletionItem;
 import org.eclipse.lsp4j.CompletionItemKind;
 import org.eclipse.lsp4j.InsertTextFormat;
@@ -56,15 +64,6 @@ import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
-import org.eclipse.lsp4xml.commons.BadLocationException;
-import org.eclipse.lsp4xml.commons.TextDocument;
-import org.eclipse.lsp4xml.dom.DOMDocument;
-import org.eclipse.lsp4xml.dom.DOMElement;
-import org.eclipse.lsp4xml.dom.DOMNode;
-import org.eclipse.lsp4xml.services.extensions.CompletionParticipantAdapter;
-import org.eclipse.lsp4xml.services.extensions.ICompletionRequest;
-import org.eclipse.lsp4xml.services.extensions.ICompletionResponse;
-import org.eclipse.lsp4xml.utils.XMLPositionUtility;
 
 public class MavenCompletionParticipant extends CompletionParticipantAdapter {
 

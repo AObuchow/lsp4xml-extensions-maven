@@ -10,11 +10,11 @@ package org.eclipse.lemminx.maven;
 
 import java.util.Optional;
 
-import org.eclipse.lsp4xml.commons.BadLocationException;
-import org.eclipse.lsp4xml.dom.DOMElement;
-import org.eclipse.lsp4xml.dom.DOMNode;
-import org.eclipse.lsp4xml.services.extensions.ICompletionRequest;
-import org.eclipse.lsp4xml.services.extensions.IPositionRequest;
+import org.eclipse.lemminx.commons.BadLocationException;
+import org.eclipse.lemminx.dom.DOMElement;
+import org.eclipse.lemminx.dom.DOMNode;
+import org.eclipse.lemminx.services.extensions.ICompletionRequest;
+import org.eclipse.lemminx.services.extensions.IPositionRequest;
 
 public class DOMUtils {
 

@@ -18,15 +18,15 @@ import javax.annotation.Nonnull;
 
 import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.model.building.ModelProblem.Severity;
+import org.eclipse.lemminx.dom.DOMDocument;
+import org.eclipse.lemminx.dom.DOMElement;
+import org.eclipse.lemminx.dom.DOMNode;
+import org.eclipse.lemminx.services.extensions.diagnostics.IDiagnosticsParticipant;
 import org.eclipse.lsp4j.Diagnostic;
 import org.eclipse.lsp4j.DiagnosticSeverity;
 import org.eclipse.lsp4j.Position;
 import org.eclipse.lsp4j.Range;
 import org.eclipse.lsp4j.jsonrpc.CancelChecker;
-import org.eclipse.lsp4xml.dom.DOMDocument;
-import org.eclipse.lsp4xml.dom.DOMElement;
-import org.eclipse.lsp4xml.dom.DOMNode;
-import org.eclipse.lsp4xml.services.extensions.diagnostics.IDiagnosticsParticipant;
 
 public class MavenDiagnosticParticipant implements IDiagnosticsParticipant {
 

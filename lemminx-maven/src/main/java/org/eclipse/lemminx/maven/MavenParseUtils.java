@@ -9,8 +9,8 @@
 package org.eclipse.lemminx.maven;
 
 import org.apache.maven.model.Dependency;
-import org.eclipse.lsp4xml.dom.DOMElement;
-import org.eclipse.lsp4xml.dom.DOMNode;
+import org.eclipse.lemminx.dom.DOMElement;
+import org.eclipse.lemminx.dom.DOMNode;
 
 public class MavenParseUtils {
 

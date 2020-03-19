@@ -25,10 +25,9 @@
 			<scope>test</scope>
 		</dependency>
 		<dependency>
-			<!-- TODO replace with Eclipse LemMinX as soon as 1st release occurs -->
-			<groupId>org.lsp4xml</groupId>
-			<artifactId>org.eclipse.lsp4xml</artifactId>
-			<version>0.9.1</version>
+			<groupId>org.eclipse.lemminx</groupId>
+			<artifactId>org.eclipse.lemminx</artifactId>
+			<version>0.11.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.maven</groupId>
@@ -92,10 +91,9 @@
 	</build>
 
 	<repositories>
-		<!-- TODO replace with LemMinX repo as soon as 1st release occurs -->
 		<repository>
-			<id>lsp4xml-releases</id>
-			<url>https://dl.bintray.com/lsp4xml/releases</url>
+			<id>lemminx-releases</id>
+			<url>https://repo.eclipse.org/content/repositories/lemminx-releases/</url>
 			<snapshots>
 				<enabled>false</enabled>
 			</snapshots>
