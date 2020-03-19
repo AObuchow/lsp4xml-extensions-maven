@@ -30,7 +30,6 @@ import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.index.artifact.Gav;
 import org.apache.maven.model.Dependency;
 
-
 public class LocalRepositorySearcher {
 	
 	private File localRepository;

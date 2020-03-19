@@ -25,6 +25,7 @@ import org.eclipse.lsp4xml.dom.DOMElement;
 import org.eclipse.lsp4xml.dom.DOMNode;
 import org.eclipse.lsp4xml.services.extensions.IDefinitionParticipant;
 import org.eclipse.lsp4xml.services.extensions.IDefinitionRequest;
+import org.eclipse.lsp4xml.utils.XMLPositionUtility;
 
 public class MavenDefinitionParticipant implements IDefinitionParticipant {
 
@@ -96,7 +97,7 @@ public class MavenDefinitionParticipant implements IDefinitionParticipant {
 
 	private LocationLink toLocation(File target, DOMElement element) {
 		Range dumbRange = new Range(new Position(0, 0), new Position(0, 0));
-		LocationLink link = new LocationLink(target.toURI().toString(), dumbRange, dumbRange);
+		LocationLink link = new LocationLink(target.toURI().toString(), dumbRange, dumbRange, XMLPositionUtility.createRange(element));
 		return link;
 	}
 
