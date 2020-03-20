@@ -41,7 +41,7 @@ public class RemoteRepositoryTest {
 	}
 
 	@After
-	public  void tearDown() {
+	public  void tearDown() throws InterruptedException, ExecutionException {
 		connection.stop();
 	}
 

@@ -47,7 +47,7 @@ public class SimpleModelTest {
 	}
 
 	@After
-	public void tearDown() {
+	public void tearDown() throws InterruptedException, ExecutionException {
 		connection.stop();
 	}
 

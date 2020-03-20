@@ -39,7 +39,7 @@ public class LocalRepoTests {
 	}
 
 	@After
-	public void tearDown() {
+	public void tearDown() throws InterruptedException, ExecutionException {
 		connection.stop();
 	}
 

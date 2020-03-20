@@ -44,7 +44,7 @@ public class PluginTest {
 	}
 
 	@After
-	public void tearDown() {
+	public void tearDown() throws InterruptedException, ExecutionException {
 		connection.stop();
 	}
 	
