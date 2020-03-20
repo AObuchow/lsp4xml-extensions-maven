@@ -164,6 +164,9 @@ public class RemoteRepositoryIndexSearcher {
 		if (artifactToSearch.getGroupId() != null) {
 			queryBuilder.add(indexer.constructQuery(MAVEN.GROUP_ID, artifactToSearch.getGroupId(), SearchType.EXACT), Occur.MUST);
 		}
+		if (artifactToSearch.getArtifactId() != null) {
+			queryBuilder.add(indexer.constructQuery(MAVEN.ARTIFACT_ID, artifactToSearch.getArtifactId(), SearchType.EXACT), Occur.MUST);
+		}
 		queryBuilder.add(indexer.constructQuery(MAVEN.PACKAGING, packaging, SearchType.EXACT), Occur.MUST);
 		final BooleanQuery query = queryBuilder.build();
 		List<IndexingContext> contexts = Collections.unmodifiableList(requestSpecificContexts != null && requestSpecificContexts.length > 0 ?

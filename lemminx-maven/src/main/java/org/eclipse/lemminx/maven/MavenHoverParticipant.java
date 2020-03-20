@@ -147,12 +147,13 @@ public class MavenHoverParticipant implements IHoverParticipant {
 	private String collectGoals(IPositionRequest request) {
 		DOMNode node = request.getNode();
 		PluginDescriptor pluginDescriptor = MavenPluginUtils.getContainingPluginDescriptor(request, cache, pluginManager);
-		
-		for (MojoDescriptor mojo : pluginDescriptor.getMojos()) {
-			if (!node.getChild(0).getNodeValue().trim().isEmpty() && node.hasChildNodes()
-					&& node.getChild(0).getNodeValue().equals(mojo.getGoal())) {
-				return mojo.getDescription();
-			}
+		if (pluginDescriptor != null ) {
+			for (MojoDescriptor mojo : pluginDescriptor.getMojos()) {
+				if (!node.getChild(0).getNodeValue().trim().isEmpty() && node.hasChildNodes()
+						&& node.getChild(0).getNodeValue().equals(mojo.getGoal())) {
+					return mojo.getDescription();
+				}
+			}			
 		}
 		return null;
 	}

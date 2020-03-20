@@ -16,13 +16,4 @@
 			<version></version>
 		</dependency>
 	</dependencies>
-		<repositories>
-		<repository>
-			<id>soffid</id>
-			<layout>m2</layout>
-			<url>http://www.soffid.com/maven/</url>
-		</repository>
-	</repositories>
-
-
 </project>

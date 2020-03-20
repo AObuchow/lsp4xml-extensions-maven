@@ -32,7 +32,6 @@ import org.eclipse.lsp4j.TextEdit;
 import org.eclipse.lsp4j.jsonrpc.messages.Either;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class PluginTest {
@@ -107,7 +106,6 @@ public class PluginTest {
  		TextDocumentPositionParams pos = new TextDocumentPositionParams( new TextDocumentIdentifier(textDocumentItem.getUri()), new Position(15, 5));
  		Hover hover = connection.languageServer.getTextDocumentService().hover(pos).get();
  		assertTrue(((MarkupContent) hover.getContents().getRight()).getValue().contains("The -source argument for the Java compiler."));
-
 	}
 	
 	@Test(timeout=15000)
@@ -118,11 +116,9 @@ public class PluginTest {
  		TextDocumentPositionParams pos = new TextDocumentPositionParams( new TextDocumentIdentifier(textDocumentItem.getUri()), new Position(18, 18));
  		Hover hover = connection.languageServer.getTextDocumentService().hover(pos).get();
  		assertTrue(((MarkupContent) hover.getContents().getRight()).getValue().contains("determines the duplicate declared dependencies."));
-
 	}
 	
-	@Ignore(value = "Remote repo is down")
-	@Test
+	@Test(timeout=15000)
  	public void testPluginArtifactHover() throws IOException, InterruptedException, ExecutionException, URISyntaxException, TimeoutException {
  		TextDocumentItem textDocumentItem = MavenLemminxTestsUtils.createTextDocumentItem("/pom-plugin-artifact-hover.xml");
  		DidOpenTextDocumentParams params = new DidOpenTextDocumentParams(textDocumentItem);
@@ -134,6 +130,5 @@ public class PluginTest {
  		} while ((((MarkupContent) hover.getContents().getRight()).getValue().contains("Updating")));
 		assertTrue((((MarkupContent) hover.getContents().getRight()).getValue()
 				.contains("Provides a maven plugin that supports creating an OSGi bundle")));
-
 	}
 }

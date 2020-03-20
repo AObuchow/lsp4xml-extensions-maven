@@ -59,7 +59,7 @@ public class LocalRepoTests {
 		assertTrue(mavenCoreCompletionItem.isPresent());
 	}
 
-	@Test
+	@Test(timeout=90000)
 	public void testCompleteLocalGroupdId()
 			throws IOException, InterruptedException, ExecutionException, URISyntaxException {
 		TextDocumentItem textDocumentItem = createTextDocumentItem("/pom-local-groupId-complete.xml");

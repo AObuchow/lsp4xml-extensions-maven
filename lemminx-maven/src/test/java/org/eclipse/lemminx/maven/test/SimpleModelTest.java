@@ -95,7 +95,7 @@ public class SimpleModelTest {
 		assertTrue(items.stream().map(CompletionItem::getLabel).anyMatch(label -> label.contains("myProperty")));
 	}
 
-	@Test
+	@Test(timeout=15000)
 	public void testLocalParentGAVCompletion()
 			throws IOException, InterruptedException, ExecutionException, URISyntaxException, TimeoutException {
 		// * if relativePath is set and resolve to a pom or a folder containing a pom, GAV must be available for completion
