@@ -11,8 +11,11 @@ package org.eclipse.lemminx.maven;
 import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -35,15 +38,14 @@ import org.eclipse.lemminx.maven.searcher.RemoteRepositoryIndexSearcher;
 import org.eclipse.lemminx.services.extensions.IHoverParticipant;
 import org.eclipse.lemminx.services.extensions.IHoverRequest;
 import org.eclipse.lemminx.services.extensions.IPositionRequest;
-import org.eclipse.lsp4j.Hover;
-import org.eclipse.lsp4j.MarkupContent;
 
 public class MavenHoverParticipant implements IHoverParticipant {
 	private final MavenProjectCache cache;
 	private final RemoteRepositoryIndexSearcher indexSearcher;
 	private final MavenPluginManager pluginManager;
 
-	public MavenHoverParticipant(MavenProjectCache cache,  RemoteRepositoryIndexSearcher indexSearcher,  MavenPluginManager pluginManager) {
+	public MavenHoverParticipant(MavenProjectCache cache, RemoteRepositoryIndexSearcher indexSearcher,
+			MavenPluginManager pluginManager) {
 		this.cache = cache;
 		this.indexSearcher = indexSearcher;
 		this.pluginManager = pluginManager;
@@ -121,14 +123,11 @@ public class MavenHoverParticipant implements IHoverParticipant {
 						// TODO: make a new function that gets only the exact artifact ID match, or just
 						// take the first thing given
 						indexSearcher.getPluginArtifactIds(artifactToSearch, index).stream()
-								.map(ArtifactInfo::getDescription)
-								.filter(Objects::nonNull)
+								.map(ArtifactInfo::getDescription).filter(Objects::nonNull)
 								.forEach(possibleHovers::add);
 					} else {
-						indexSearcher.getArtifactIds(artifactToSearch, index).stream()
-								.map(ArtifactInfo::getDescription)
-								.filter(Objects::nonNull)
-								.forEach(possibleHovers::add);
+						indexSearcher.getArtifactIds(artifactToSearch, index).stream().map(ArtifactInfo::getDescription)
+								.filter(Objects::nonNull).forEach(possibleHovers::add);
 					}
 				}).whenComplete((ok, error) -> possibleHovers.remove(updatingItem));
 
@@ -146,22 +145,24 @@ public class MavenHoverParticipant implements IHoverParticipant {
 
 	private String collectGoals(IPositionRequest request) {
 		DOMNode node = request.getNode();
-		PluginDescriptor pluginDescriptor = MavenPluginUtils.getContainingPluginDescriptor(request, cache, pluginManager);
-		if (pluginDescriptor != null ) {
+		PluginDescriptor pluginDescriptor = MavenPluginUtils.getContainingPluginDescriptor(request, cache,
+				pluginManager);
+		if (pluginDescriptor != null) {
 			for (MojoDescriptor mojo : pluginDescriptor.getMojos()) {
 				if (!node.getChild(0).getNodeValue().trim().isEmpty() && node.hasChildNodes()
 						&& node.getChild(0).getNodeValue().equals(mojo.getGoal())) {
 					return mojo.getDescription();
 				}
-			}			
+			}
 		}
 		return null;
 	}
 
 	private String collectPuginConfiguration(IPositionRequest request) {
-		List<Parameter> parameters = MavenPluginUtils.collectPluginConfigurationParameters(request, cache, pluginManager);
+		List<Parameter> parameters = MavenPluginUtils.collectPluginConfigurationParameters(request, cache,
+				pluginManager);
 		DOMNode node = request.getNode();
-		
+
 		for (Parameter parameter : parameters) {
 			if (node.getLocalName().equals(parameter.getName())) {
 				return MavenPluginUtils.getMarkupDescription(parameter).getValue();
@@ -169,17 +170,71 @@ public class MavenHoverParticipant implements IHoverParticipant {
 		}
 		return null;
 	}
-	
-	private Hover toHover(String description) {
-		Hover hover = new Hover();
-		hover.setContents(new MarkupContent("plaintext", description));
-		return hover;
-	}
 
 	@Override
 	public String onText(IHoverRequest request) throws Exception {
-		// TODO Auto-generated method stub
+		String mavenProperty = getMavenPropertyInHover(request);
+		if (mavenProperty != null) {
+			return collectProperty(request, mavenProperty);
+		}
+		
 		return null;
 	}
 	
+	public String getMavenPropertyInHover(IPositionRequest request) {
+		DOMNode tag = request.getNode();
+		String tagText = tag.getNodeValue();
+		
+		int hoverLocation = request.getOffset();
+		int propertyOffset = request.getNode().getStart();
+		int beforeHover = hoverLocation - propertyOffset;
+		
+		String beforeHoverText = tagText.substring(0, beforeHover);
+		String afterHoverText = tagText.substring(beforeHover);
+		
+		int indexOpen = beforeHoverText.lastIndexOf("${");
+		int indexCloseBefore = beforeHoverText.lastIndexOf('}');
+		int indexCloseAfter = afterHoverText.indexOf('}');
+		if (indexOpen > indexCloseBefore) {
+			return tagText.substring(indexOpen + 2, indexCloseAfter + beforeHover);
+		}
+		return null;
+	}
+	
+	private String collectProperty(IPositionRequest request, String property) {
+		DOMDocument doc = request.getXMLDocument();
+		MavenProject project = cache.getLastSuccessfulMavenProject(doc);
+		if (project != null) {
+			Map<String, String> allProps = getMavenProjectProperties(project);
+			
+			for (Entry<String, String> prop : allProps.entrySet()) {
+				String mavenProperty = prop.getKey();
+				if (property.equals(mavenProperty)) {
+					return "Property: " + mavenProperty + "\n" + "Value: " +  prop.getValue() + "\n";
+				}
+			}
+		}
+		return null;
+	}
+
+	// TODO: Move this function to a utility class
+	public static Map<String, String> getMavenProjectProperties(MavenProject project) {
+		Map<String, String> allProps = new HashMap<>();
+		if (project.getProperties() != null) {
+			for (Entry<Object, Object> prop : project.getProperties().entrySet()) {
+				allProps.put((String) prop.getKey(), (String) prop.getValue());
+			}
+		}
+		allProps.put("basedir", project == null ? "unknown" : project.getBasedir().toString());
+		allProps.put("project.basedir", project == null ? "unknown" : project.getBasedir().toString());
+		allProps.put("project.version", project == null ? "unknown" : project.getVersion());
+		allProps.put("project.groupId", project == null ? "unknown" : project.getGroupId());
+		allProps.put("project.artifactId", project == null ? "unknown" : project.getArtifactId());
+		allProps.put("project.name", project == null ? "unknown" : project.getName());
+		allProps.put("project.build.directory", project.getBuild() == null ? "unknown" : project.getBuild().getDirectory());
+		allProps.put("project.build.outputDirectory",
+				project.getBuild() == null ? "unknown" : project.getBuild().getOutputDirectory());
+		return allProps;
+	}
+
 }
