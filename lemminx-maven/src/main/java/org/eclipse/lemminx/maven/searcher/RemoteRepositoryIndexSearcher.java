@@ -265,10 +265,12 @@ public class RemoteRepositoryIndexSearcher {
 	public void closeContext() {
 		for (IndexingContext context : indexingContexts.values()) {
 			try {
-				indexer.closeIndexingContext(context, false);
-				CompletableFuture<?> download = indexDownloadJobs.get(context);
-				if (!download.isDone()) {
-					download.cancel(true);
+				if (context != null ) {
+					indexer.closeIndexingContext(context, false);
+					CompletableFuture<?> download = indexDownloadJobs.get(context);
+					if (!download.isDone()) {
+						download.cancel(true);
+					}					
 				}
 			} catch (IOException e) {
 				System.out.println("Warning - could not close context: " + context.getId());

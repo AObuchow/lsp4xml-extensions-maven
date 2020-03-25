@@ -127,7 +127,7 @@ public class SimpleModelTest {
 		// * if relativePath is not set, complete with remote repo artifacts with "pom" packaging
 	}
 
-	@Test
+	@Test(timeout=45000)
 	public void testMissingArtifactIdError()
 			throws IOException, InterruptedException, ExecutionException, URISyntaxException {
 		TextDocumentItem textDocumentItem = createTextDocumentItem("/pom-without-artifactId.xml");
